@@ -1,0 +1,124 @@
+Information about default regions and zones:
+gcloud compute project-info describe --project <your_project_ID>
+
+Installing google sdk:  
+gcloud init
+
+Making environment:  
+export PROJECT_ID=<your_project_ID>
+
+Set zone environment variable:  
+export ZONE=<your_zone>
+
+Verify variables if set correctly:  
+echo $PROJECT_ID
+echo $ZONE
+
+gcloud compute 		//enables one to manage Comppute Engine resources
+instance create 	//creates a new instance
+
+Creating a virtual machine:
+gcloud compute instances create gcelab2 --machine-type n1-standard-2 --zone $ZONE
+
+List the compute engine instances:
+gcloud compute instances list
+
+Help:
+gcloud compute instances create --help
+gcloud -h
+gcloud config --help
+
+List of configurations:
+gcloud config list		
+gcloud config list --all
+gcloud components list		//list all the components
+
+List the active account name:
+gcloud auth list
+
+List the Project ID:
+gcloud config list project
+
+Setting a default computer zone:
+gcloud config set compute/zone us-central1-a
+
+Creating a cluster:
+gcloud container clusters create [CLUSTER-NAME]
+
+Authenticating the cluster:
+gcloud container clusters get-credentials [CLUSTER-NAME]
+
+Create new deployment:
+kubectl create deployment hello-server --image=gcr.io/google-samples/hello-app:1.0
+
+Create Kubernetes service and expose to external traffic:
+kubectl expose deployment hello-server --type=LoadBalancer --port 8080
+
+Get Kubernetes services:
+kubectl get service
+
+Delete cluster:
+gcloud container clusters delete [CLUSTER-NAME]
+
+Script to setup Nginx:
+cat << EOF > startup.sh
+#! /bin/bash
+apt-get update
+apt-get install -y nginx
+service nginx start
+sed -i -- 's/nginx/Google Cloud Platform - '"\$HOSTNAME"'/' /var/www/html/index.nginx-debian.html
+EOF
+
+
+Create an instance template:
+gcloud compute instance-templates create nginx-template \
+         --metadata-from-file startup-script=startup.sh
+
+Create a target pool:
+gcloud compute target-pools create nginx-pool
+
+Create a managed instance group using the instance template:
+gcloud compute instance-groups managed create nginx-group \
+         --base-instance-name nginx \
+         --size 2 \
+         --template nginx-template \
+         --target-pool nginx-pool
+
+Create a firewall rule to allow traffic (80/tcp):
+gcloud compute firewall-rules create www-firewall --allow tcp:80
+
+Create a health check which verify that the instance is respoding to HTTP:
+gcloud compute http-health-checks create http-basic-check
+
+Forwarding traffic to a named port(mapping port to the relevant port):
+gcloud compute instance-groups managed \
+       set-named-ports nginx-group \
+       --named-ports http:80
+
+Create a backend service:
+gcloud compute backend-services create nginx-backend \
+      --protocol HTTP --http-health-checks http-basic-check --global
+
+Add the instance group into the backend service:
+gcloud compute backend-services add-backend nginx-backend \
+    --instance-group nginx-group \
+    --instance-group-zone us-central1-a \
+    --global
+
+Create a default URL map that directs all incoming requests to all your instances:
+gcloud compute url-maps create web-map \
+    --default-service nginx-backend
+
+Create a target HTTP proxy to route requests to your URL map:
+gcloud compute target-http-proxies create http-lb-proxy \
+    --url-map web-map
+
+Create a global forwarding rule:
+gcloud compute forwarding-rules create http-content-rule \
+        --global \
+        --target-http-proxy http-lb-proxy \
+        --ports 80
+
+-----------------------------------------------------------------------------------------------
+
+Create Buckets and add files to bucket and make them publicly visible.
