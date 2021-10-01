@@ -13,10 +13,13 @@ class houseparty{
         return b;
     }
     public static void main(String[] args) {
-        int[] A={2,3,4,5,6};
+       try{
+            int[] A={2,3,4,5,6};
        int[] z=solve(A);
        for(int i=0;i<z.length;i++){
         System.out.print(z[i]+" ");
         }
+       }catch(Exception e){e.printStackTrace();}
+      
     }
 }
